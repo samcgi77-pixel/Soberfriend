@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SoberFriend</title>
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/lucide-react@0.263.1/dist/umd/lucide-react.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body { margin: 0; font-family: 'Inter', sans-serif; background: #0f172a; overscroll-behavior: none; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        /* Prevent pull-to-refresh on mobile */
+        html, body { height: 100%; overflow: hidden; }
+    </style>
+</head>
+<body>
+    <div id="root" style="height: 100%;"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        const { 
+            Home, BookOpen, MessageCircle, Wrench, User, Phone, PhoneCall,
+            Wind, Heart, Send, Plus, Smile, Meh, Frown, SunMedium, CloudRain, Battery
+        } = lucideReact;
+
+        const AnimatedBackground = () => (
+            <div className="fixed inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute inset-0">
+                    <div className="animate-pulse absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-r from-teal-400/20 to-cyan-400/20 rounded-full blur-3xl" style={{ animationDuration: '8s' }} />
+                    <div className="animate-pulse absolute top-3/4 right-1/4 w-80 h-80 bg-gradient-to-r from-violet-400/15 to-purple-400/15 rounded-full blur-3xl" style={{ animationDelay: '2s', animationDuration: '10s' }} />
+                </div>
+            </div>
+        );
+
+        const SuccessRateRing = ({ percentage = 98 }) => {
+            const circumference = 2 * Math.PI * 90;
+            const strokeDashoffset = circumference - (percentage / 100) * circumference;
+            return (
+                <div className="bg-white/10 backdrop-blur-xl border border-white/10 rounded-3xl p-6 relative overflow-hidden flex flex-col items-center">
+                    <h3 className="text-lg font-medium text-white/90 mb-4">Recovery Success</h3>
+                    <div className="relative w-40 h-40">
+                        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 200 200">
+                            <circle cx="100" cy="100" r="90" stroke="rgba(255,255,255,0.1)" strokeWidth="8" fill="transparent" />
+                            <circle cx="100" cy="100" r="90" stroke="#14b8a6" strokeWidth="8" fill="transparent" strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} />
+                        </svg>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                            <span className="text-3xl font-bold text-teal-400">{percentage}%</span>
+                            <span className="text-xs text-white/60">This Year</span>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const DailyCheckin = ({ onMoodSelect }) => {
+            const [selected, setSelected] = useState(null);
+            const moods = [
+                { icon: Smile, color: 'from-green-400 to-emerald-400', label: 'Good' },
+                { icon: SunMedium, color: 'from-yellow-300 to-amber-300', label: 'Great' },
+                { icon: Meh, color: 'from-yellow-400 to-orange-400', label: 'Okay' },
+                { icon: CloudRain, color: 'from-blue-400 to-indigo-400', label: 'Blue' },
+                { icon: Battery, color: 'from-purple-400 to-violet-400', label: 'Tired' },
+                { icon: Frown, color: 'from-orange-500 to-red-500', label: 'Tough' }
+            ];
+            return (
+                <div className="bg-white/10 backdrop-blur-xl border border-white/10 rounded-3xl p-6">
+                    <h3 className="text-lg font-medium text-white/90 mb-4">How are you feeling?</h3>
+                    <div className="grid grid-cols-3 gap-3">
+                        {moods.map((m, i) => (
+                            <button key={i} onClick={() => { setSelected(i); onMoodSelect(m); }} 
+                                className={`flex flex-col items-center justify-center p-3 rounded-2xl bg-gradient-to-br ${m.color} ${selected === i ? 'ring-2 ring-white' : 'opacity-90'}`}>  
+                                <m.icon className="w-6 h-6 text-white mb-1" />
+                                <span className="text-xs text-white font-bold">{m.label}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        const ChatInterface = () => {
+            const [msgs, setMsgs] = useState([{ id: 1, text: "Hey! I'm here for you. How are things?", sender: 'bot' }]);
+            const [txt, setTxt] = useState('');
+            const send = () => {
+                if (!txt.trim()) return;
+                setMsgs([...msgs, { id: Date.now(), text: txt, sender: 'user' }]);
+                setTxt('');
+                setTimeout(() => setMsgs(prev => [...prev, { id: Date.now()+1, text: "I hear you. You're doing the best you can.", sender: 'bot' }]), 1000);
+            };
+            return (
+                <div className="flex flex-col h-full">
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                        {msgs.map(m => (
+                            <div key={m.id} className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}>  
+                                <div className={`max-w-[80%] p-4 rounded-3xl ${m.sender === 'user' ? 'bg-teal-600 text-white' : 'bg-white/10 text-white/90'}`}>  
+                                    {m.text}  
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="p-4 bg-white/5 backdrop-blur-lg flex gap-2 mb-20">
+                        <input value={txt} onChange={e => setTxt(e.target.value)} className="flex-1 bg-white/10 rounded-xl px-4 text-white" placeholder="Type here..." />
+                        <button onClick={send} className="p-3 bg-teal-500 rounded-xl text-white"><Send size={20} /></button>
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [tab, setTab] = useState('home');
+            const [sos, setSos] = useState(false);
+            
+            return (
+                <div className="h-full flex flex-col text-white relative">
+                    <AnimatedBackground />
+                    <div className="flex-1 overflow-y-auto z-10 pb-24">
+                        {tab === 'home' && (
+                            <div className="p-6 space-y-6">
+                                <div>
+                                    <h1 className="text-3xl font-bold">Welcome Back</h1>
+                                    <p className="text-white/60">One step at a time.</p>
+                                </div>
+                                <SuccessRateRing />
+                                <DailyCheckin onMoodSelect={() => {}} />
+                            </div>
+                        )}
+                        {tab === 'chat' && <ChatInterface />}
+                        {tab === 'tools' && <div className="p-10 text-center opacity-60">Tools coming soon</div>}
+                    </div>
+
+                    {/* SOS Overlay */}
+                    {sos && (
+                        <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-6 backdrop-blur-xl">
+                            <div className="w-full max-w-sm bg-slate-900 border border-white/10 rounded-3xl p-6 text-center">
+                                <h2 className="text-2xl font-bold mb-6">Emergency Support</h2>
+                                <div className="space-y-4">
+                                    <a href="tel:988" className="block w-full py-4 bg-red-600 rounded-2xl font-bold flex items-center justify-center gap-2"><Phone /> Call 988</a>
+                                    <a href="tel:123" className="block w-full py-4 bg-blue-600 rounded-2xl font-bold flex items-center justify-center gap-2"><PhoneCall /> Call Sponsor</a>
+                                    <button onClick={() => setSos(false)} className="w-full py-4 bg-white/10 rounded-2xl">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Navigation */}
+                    <div className="fixed bottom-0 w-full bg-white/10 backdrop-blur-xl border-t border-white/10 z-40 pb-safe">
+                        <div className="flex justify-around p-4">
+                            <button onClick={() => setTab('home')} className={tab==='home'?'text-teal-400':'text-white/60'}><Home /></button>
+                            <button onClick={() => setTab('chat')} className={tab==='chat'?'text-teal-400':'text-white/60'}><MessageCircle /></button>
+                            <div className="relative -top-8">
+                                <button onClick={() => setSos(true)} className="w-16 h-16 bg-gradient-to-br from-rose-500 to-orange-500 rounded-full flex items-center justify-center shadow-lg animate-pulse text-white">
+                                    <Heart fill="white" />
+                                </button>
+                            </div>
+                            <button onClick={() => setTab('tools')} className={tab==='tools'?'text-teal-400':'text-white/60'}><Wrench /></button>
+                            <button className="text-white/60"><User /></button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
